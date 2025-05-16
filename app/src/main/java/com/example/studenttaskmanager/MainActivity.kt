@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.studenttaskmanager.presentation.add_task.AddTaskScreen
 import com.example.studenttaskmanager.presentation.login.LoginScreen
 import com.example.studenttaskmanager.presentation.login.SignUpScreen
+import com.example.studenttaskmanager.presentation.profile.ProfileScreen
 import com.example.studenttaskmanager.presentation.task_list.TaskListScreen
 import com.example.studenttaskmanager.ui.theme.StudentTaskManagerTheme
 import com.google.firebase.auth.FirebaseAuth
@@ -55,6 +56,15 @@ class MainActivity : ComponentActivity() {
                             onBack = { navController.popBackStack() }
                         )
                     }
+                    composable("profile"){
+                        ProfileScreen(
+                            navController = navController
+                        )
+                    }
+//                    composable("taskDetails/{taskId}") { backStackEntry ->
+//                        val taskId = backStackEntry.arguments?.getString("taskId") ?: return@composable
+//                        TaskDetailsScreen(taskId = taskId)
+//                    }
                 }
             }
         }

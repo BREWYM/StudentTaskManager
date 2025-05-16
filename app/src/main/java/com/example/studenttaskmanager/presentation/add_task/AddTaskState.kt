@@ -4,7 +4,7 @@ import com.example.studenttaskmanager.domain.models.Task
 
 data class AddTaskState(
     val title: String = "",
-    val subject: String = "",
+    val subject: String? = null,
     val deadline: Long = System.currentTimeMillis(),
     val professor: String = "",
     val priority: Task.Priority = Task.Priority.MEDIUM,

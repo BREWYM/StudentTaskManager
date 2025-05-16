@@ -3,77 +3,98 @@ package com.example.studenttaskmanager.data.remote
 import android.util.Log
 import com.example.studenttaskmanager.common.Resource
 import com.example.studenttaskmanager.domain.models.Comment
+import com.example.studenttaskmanager.domain.models.Subject
 import com.example.studenttaskmanager.domain.models.Task
+import com.example.studenttaskmanager.domain.models.TaskDto
+import com.example.studenttaskmanager.domain.repositories.SubjectRepository
 import com.example.studenttaskmanager.domain.repositories.TaskRepository
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class TaskRepositoryImpl(
-    private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
+    private val subjectRepository: SubjectRepository,
 //    private val storage: FirebaseStorage
 ): TaskRepository
 {
-    override suspend fun getTasks(userId: String): Resource<List<Task>> {
-        return try {
-            val snapshot = firestore.collection("tasks")
-//                .whereEqualTo("creatorId", userId)
-//                .whereEqualTo("isGroupTask", false)
+    private val tasksCollection = firestore.collection("tasks")
+
+    override suspend fun getTasks(userId: String): Resource<List<Task>> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val snapshot = tasksCollection
+                .whereEqualTo("creatorId", userId)
                 .get()
                 .await()
-                .toObjects(Task::class.java)
-            Log.d("RepoDebug", "Документов: ${snapshot.lastIndex}")
-            Resource.Success(snapshot)
+
+            //val groupId = getUserGroupId(userId) // предположим, что у тебя есть такой метод
+            val groupId = ""
+          //  val subjects = subjectRepository.getSubjects(groupId)
+
+            val tasks = snapshot.documents.mapNotNull { doc ->
+                val dto = doc.toObject(TaskDto::class.java)
+                //val subject = subjects.find { it.name == dto?.subjectName }
+                dto?.toTask(null)
+            }
+            Log.d("LOAD", "${tasks.size} Загружен")
+            checkSubjectsForGroup("")
+
+            Resource.Success(tasks)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Не удалось загрузить задачи")
+            Resource.Error("Не удалось загрузить задачи: ${e.message}")
         }
     }
-    override suspend fun getGroupTasks(groupId: String): Resource<List<Task>> {
-        return try {
-            val snapshot = firestore.collection("tasks")
-//                .whereEqualTo("groupId", groupId)
-//                .whereEqualTo("isGroupTask", true)
+
+    override suspend fun getGroupTasks(groupId: String): Resource<List<Task>> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val snapshot = tasksCollection
+                .whereEqualTo("isGroupTask", true)
                 .get()
                 .await()
-                .toObjects(Task::class.java)
-            Resource.Success(snapshot)
+
+            val subjects = subjectRepository.getSubjects(groupId)
+
+            val tasks = snapshot.documents.mapNotNull { doc ->
+                val dto = doc.toObject(TaskDto::class.java)
+                val subject = subjects.find { it.name == dto?.subjectName }
+                dto?.toTask(subject)
+            }
+
+            Resource.Success(tasks)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Не удалось загрузить групповые задачи")
+            Resource.Error("Не удалось загрузить групповые задачи: ${e.message}")
+        }
+    }
+    suspend fun checkSubjectsForGroup(groupId: String) {
+        val subjects = subjectRepository.getSubjects(groupId)
+        if (subjects.isEmpty()) {
+            Log.d("CheckSubjects", "Для groupId = $groupId предметы не найдены")
+        } else {
+            Log.d("CheckSubjects", "Для groupId = $groupId найдены предметы:")
+            subjects.forEach { subject ->
+                Log.d("CheckSubjects", "- ${subject.name}")
+            }
         }
     }
 
-
-    override suspend fun addTask(task: Task) {
-//        val taskId = UUID.randomUUID().toString() // Генерируем уникальный ID
-//        firestore.collection("tasks")
-//            .document(taskId)
-//            .set(task.copy(id = taskId))
-//            .await()
-//        return taskId
-        firestore.collection("tasks").add(task)
-            .addOnSuccessListener { docRef ->
-                Log.d("TaskVM", "Задача добавлена, ID = ${docRef.id}")
-            }
-            .addOnFailureListener { e ->
-                Log.e("TaskVM", "Ошибка добавления задачи", e)
-            }
-
+    override suspend fun addTask(task: Task): Unit = withContext(Dispatchers.IO) {
+        val docRef = if (task.id.isEmpty()) tasksCollection.document() else tasksCollection.document(task.id)
+        val taskWithId = task.copy(id = docRef.id)
+        val dto = TaskDto.fromTask(taskWithId)
+        docRef.set(dto).await()
     }
-    override suspend fun deleteTask(taskId: String) {
-        firestore.collection("tasks")
-            .document(taskId)
-            .delete()
-            .await()
+    override suspend fun deleteTask(taskId: String): Unit = withContext(Dispatchers.IO) {
+        tasksCollection.document(taskId).delete().await()
     }
 
-    override suspend fun updateTask(task: Task) {
-        firestore.collection("tasks")
-            .document(task.id)
-            .set(task)
-            .await()
+    override suspend fun updateTask(task: Task): Unit = withContext(Dispatchers.IO) {
+        require(task.id.isNotEmpty()) { "Task ID must not be empty when updating." }
+        val dto = TaskDto.fromTask(task)
+        tasksCollection.document(dto.id).set(dto).await()
     }
+
 
     override suspend fun getComments(taskId: String): List<Comment> {
         return firestore.collection("tasks")

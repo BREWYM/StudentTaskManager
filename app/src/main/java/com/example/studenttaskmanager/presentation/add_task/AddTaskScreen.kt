@@ -66,11 +66,12 @@ fun AddTaskScreen(
             )
 
             OutlinedTextField(
-                value = state.subject,
+                value = state.subject ?: "",
                 onValueChange = viewModel::updateSubject,
-                label = { Text("Предмет*") },
+                label = { Text("Предмет") },
                 modifier = Modifier.fillMaxWidth()
             )
+
 
             OutlinedTextField(
                 value = state.professor,
@@ -120,7 +121,7 @@ fun AddTaskScreen(
             // Кнопка сохранения
             Button(
                 onClick = viewModel::addTask,
-                enabled = !state.isLoading && state.title.isNotBlank() && state.subject.isNotBlank(),
+                enabled = !state.isLoading && state.title.isNotBlank() && state.subject.toString().isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp)

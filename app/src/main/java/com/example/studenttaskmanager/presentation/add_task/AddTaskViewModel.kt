@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.studenttaskmanager.domain.models.Subject
 import com.example.studenttaskmanager.domain.models.Task
 import com.example.studenttaskmanager.domain.use_cases.AddTaskUseCase
 import com.google.firebase.auth.ktx.auth
@@ -49,7 +50,11 @@ class AddTaskViewModel(
             try {
                 val task = Task(
                     title = _state.value.title,
-                    subject = _state.value.subject,
+                    subject = Subject(
+                        name = _state.value.subject?:"",
+                        professor = _state.value.professor,
+                        groupId = "123"
+                    ),
                     professor = _state.value.professor,
                     deadline = _state.value.deadline,
                     priority = _state.value.priority,

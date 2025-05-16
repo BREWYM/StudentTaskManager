@@ -7,10 +7,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
 class AuthRepositoryImpl(
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val firestore: FirebaseFirestore
 ): AuthRepository {
     override suspend fun login(email: String, password: String): Resource<FirebaseUser> = try {
         val res = auth.signInWithEmailAndPassword(email, password).await()
@@ -22,7 +25,12 @@ class AuthRepositoryImpl(
 
     override suspend fun register(email: String, password: String, name: String): Resource<FirebaseUser> = try {
         val res = auth.createUserWithEmailAndPassword(email, password).await()
-        res.user?.updateProfile(UserProfileChangeRequest.Builder().setDisplayName(name).build())?.await()
+        val user = res.user ?: throw Exception("Пользователь не создан")
+
+        // Сохраняем имя в FirebaseAuth профиле
+        user.updateProfile(UserProfileChangeRequest.Builder().setDisplayName(name).build()).await()
+        // Сохраняем пользователя в Firestore
+        saveUserToFirestore(user.uid, email, name)
         Log.e("Register", "Регистрация")
         Resource.Success(auth.currentUser!!)
     } catch (e: Exception) {
@@ -41,4 +49,16 @@ class AuthRepositoryImpl(
         return auth.currentUser
     }
 
+    private suspend fun saveUserToFirestore(uid: String, email: String, name: String) {
+        val userData = mapOf(
+            "id" to uid,
+            "email" to email,
+            "name" to name,
+            "groupId" to null
+        )
+        firestore.collection("users")
+            .document(uid)
+            .set(userData, SetOptions.merge())
+            .await()
+    }
 }
