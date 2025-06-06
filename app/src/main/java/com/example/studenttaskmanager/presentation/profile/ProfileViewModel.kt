@@ -6,10 +6,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studenttaskmanager.domain.models.Group
-import com.example.studenttaskmanager.domain.models.User
 import com.example.studenttaskmanager.domain.repositories.UserRepository
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -39,21 +39,25 @@ class ProfileViewModel(
         inviteCode = newCode
     }
 
-    suspend fun loadUser() {
-        val uid = Firebase.auth.currentUser?.uid ?: return
-        val userDoc = firestore.collection("users").document(uid).get().await()
-        val user = userDoc.toObject(User::class.java)
-
+    fun loadUser() = viewModelScope.launch {
+        val user = userRepository.getCurrentUser()
         name = user?.name ?: ""
-
-        user?.groupId?.let { groupId ->
-            val groupDoc = firestore.collection("groups").document(groupId).get().await()
-            val group = groupDoc.toObject(Group::class.java)
-
-            currentGroupName = group?.name
-            inviteCode = group?.inviteCode ?: "" // 👈 вот это нужно!
+        user?.groupId?.let { gid ->
+            try {
+                val snapshot = Firebase.firestore
+                    .collection("groups")   // коллекция
+                    .document(gid)          // конкретный документ
+                    .get()
+                    .await()
+                val group = snapshot.toObject(Group::class.java)
+                currentGroupName = group?.name
+            } catch (e: Exception) {
+                println(e.localizedMessage)
+                // обработать ошибку чтения
+            }
         }
     }
+
 
 
     fun createGroup() = viewModelScope.launch {
@@ -75,13 +79,13 @@ class ProfileViewModel(
         } else {
             message = "Группа не найдена"
         }
-        inviteCode = ""
     }
 
     fun leaveGroup() = viewModelScope.launch {
         userRepository.leaveGroup()
         currentGroupName = null
         message = "Вы вышли из группы"
+        inviteCode = ""
     }
     fun logout() {
         Firebase.auth.signOut() // или через AuthRepository, если он внедрён

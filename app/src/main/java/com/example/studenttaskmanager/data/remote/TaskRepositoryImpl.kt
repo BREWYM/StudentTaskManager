@@ -3,7 +3,6 @@ package com.example.studenttaskmanager.data.remote
 import android.util.Log
 import com.example.studenttaskmanager.common.Resource
 import com.example.studenttaskmanager.domain.models.Comment
-import com.example.studenttaskmanager.domain.models.Subject
 import com.example.studenttaskmanager.domain.models.Task
 import com.example.studenttaskmanager.domain.models.TaskDto
 import com.example.studenttaskmanager.domain.repositories.SubjectRepository
@@ -29,14 +28,9 @@ class TaskRepositoryImpl(
                 .get()
                 .await()
 
-            //val groupId = getUserGroupId(userId) // предположим, что у тебя есть такой метод
-            val groupId = ""
-          //  val subjects = subjectRepository.getSubjects(groupId)
-
             val tasks = snapshot.documents.mapNotNull { doc ->
                 val dto = doc.toObject(TaskDto::class.java)
-                //val subject = subjects.find { it.name == dto?.subjectName }
-                dto?.toTask(null)
+                dto?.toPersonalTask(dto.subjectName)
             }
             Log.d("LOAD", "${tasks.size} Загружен")
             checkSubjectsForGroup("")
@@ -85,6 +79,12 @@ class TaskRepositoryImpl(
         val dto = TaskDto.fromTask(taskWithId)
         docRef.set(dto).await()
     }
+
+    override suspend fun getTaskById(taskId: String): Task {
+        val snapshot = tasksCollection.document(taskId).get().await()
+        return snapshot.toObject(Task::class.java)!!.copy(id = snapshot.id)
+    }
+
     override suspend fun deleteTask(taskId: String): Unit = withContext(Dispatchers.IO) {
         tasksCollection.document(taskId).delete().await()
     }

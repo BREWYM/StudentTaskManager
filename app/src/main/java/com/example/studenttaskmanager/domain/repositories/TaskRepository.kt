@@ -8,6 +8,7 @@ interface TaskRepository {
     suspend fun getTasks(userId: String): Resource<List<Task>>
     suspend fun getGroupTasks(groupId: String): Resource<List<Task>>
     suspend fun addTask(task: Task) //ID задачи
+    suspend fun getTaskById(taskId: String) : Task
     suspend fun deleteTask(taskId: String)
     suspend fun updateTask(task: Task)
 

@@ -11,6 +11,7 @@ import com.example.studenttaskmanager.presentation.add_task.AddTaskScreen
 import com.example.studenttaskmanager.presentation.login.LoginScreen
 import com.example.studenttaskmanager.presentation.login.SignUpScreen
 import com.example.studenttaskmanager.presentation.profile.ProfileScreen
+import com.example.studenttaskmanager.presentation.task_details.TaskDetailsScreen
 import com.example.studenttaskmanager.presentation.task_list.TaskListScreen
 import com.example.studenttaskmanager.ui.theme.StudentTaskManagerTheme
 import com.google.firebase.auth.FirebaseAuth
@@ -61,10 +62,15 @@ class MainActivity : ComponentActivity() {
                             navController = navController
                         )
                     }
-//                    composable("taskDetails/{taskId}") { backStackEntry ->
-//                        val taskId = backStackEntry.arguments?.getString("taskId") ?: return@composable
-//                        TaskDetailsScreen(taskId = taskId)
-//                    }
+                    composable("taskDetails/{taskId}/{subjectName}") { backStackEntry ->
+                        val taskId = backStackEntry.arguments?.getString("taskId") ?: return@composable
+                        val subjectName = backStackEntry.arguments?.getString("subjectName") ?: ""
+                        TaskDetailsScreen(
+                            taskId = taskId,
+                            navController = navController,
+                            subjectNameFromArgs = subjectName
+                        )
+                    }
                 }
             }
         }

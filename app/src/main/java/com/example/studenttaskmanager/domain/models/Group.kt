@@ -5,6 +5,6 @@ data class Group(
     val name: String = "",
     val adminId: String = "",
     val inviteCode: String = "",
-    val subjectPool: List<String> = emptyList(),
+    val subjectPool: List<Subject> = emptyList(),
     val professorPool: List<String> = emptyList()
 )

@@ -15,6 +15,7 @@ import com.example.studenttaskmanager.domain.use_cases.SignUpUseCase
 import com.example.studenttaskmanager.presentation.add_task.AddTaskViewModel
 import com.example.studenttaskmanager.presentation.login.AuthViewModel
 import com.example.studenttaskmanager.presentation.profile.ProfileViewModel
+import com.example.studenttaskmanager.presentation.task_details.TaskDetailsViewModel
 import com.example.studenttaskmanager.presentation.task_list.TaskViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -54,6 +55,8 @@ val viewModelModule = module {
     viewModel { AddTaskViewModel(get()) }
     viewModel { AuthViewModel(get(), get()) }
     viewModel{ ProfileViewModel(get(), get()) }
+    viewModel{ TaskViewModel(get()) }
+    viewModel{ TaskDetailsViewModel(get()) }
 //    viewModel { GroupViewModel(get()) }
 //    viewModel { AuthViewModel(get()) }
 }

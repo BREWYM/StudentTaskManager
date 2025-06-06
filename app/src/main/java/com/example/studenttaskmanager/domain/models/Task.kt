@@ -12,6 +12,7 @@ data class Task(
     var isCompleted: Boolean = false,
     var isGroupTask: Boolean = false, //личная/групповая
     var creatorId: String = "",
+    val comments: List<String> = emptyList()
    // val files: List<String> = emptyList() //тут будут ссылки на файлы в Storage
 ){
     enum class Priority{ LOW, MEDIUM, HIGH}
@@ -26,7 +27,8 @@ data class TaskDto(
     var priority: String = Priority.MEDIUM.name,
     var isCompleted: Boolean = false,
     var isGroupTask: Boolean = false,
-    var creatorId: String = ""
+    var creatorId: String = "",
+    val comments: List<String> = emptyList()
     // files можно добавить позже
 ){
     fun toTask(subject: Subject?): Task {
@@ -34,6 +36,19 @@ data class TaskDto(
             id = id,
             title = title,
             subject = subject,
+            professor = professor,
+            deadline = deadline,
+            priority = Priority.valueOf(priority),
+            isCompleted = isCompleted,
+            isGroupTask = isGroupTask,
+            creatorId = creatorId
+        )
+    }
+    fun toPersonalTask(subjectName: String): Task {
+        return Task(
+            id = id,
+            title = title,
+            subject = Subject(name = subjectName),
             professor = professor,
             deadline = deadline,
             priority = Priority.valueOf(priority),

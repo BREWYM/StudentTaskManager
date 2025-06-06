@@ -8,7 +8,8 @@ import kotlinx.coroutines.tasks.await
 
 class SubjectRepositoryImpl(
     private val firestore: FirebaseFirestore
-): SubjectRepository {
+) : SubjectRepository {
+
     override suspend fun getSubjects(groupId: String): List<Subject> {
         return try {
             val snapshot = firestore.collection("groups")
@@ -17,39 +18,47 @@ class SubjectRepositoryImpl(
                 .get()
                 .await()
 
-            snapshot.documents.mapNotNull { it.toObject(SubjectDto::class.java)?.toSubject() }
+            snapshot.documents.mapNotNull { doc ->
+                val dto = doc.toObject(SubjectDto::class.java)
+                dto?.copy(subjectId = doc.id)?.toSubject()
+            }
+
         } catch (e: Exception) {
+            println(e.localizedMessage)
             emptyList()
         }
     }
 
     override suspend fun addSubject(subject: Subject) {
         val dto = SubjectDto.fromSubject(subject)
-        firestore.collection("groups")
+        val newDocRef = firestore.collection("groups")
             .document(subject.groupId)
             .collection("subjects")
-            .add(dto)
-            .await()
+            .document() // автоматическая генерация ID
+
+        val dtoWithId = dto.copy(subjectId = newDocRef.id)
+        newDocRef.set(dtoWithId).await()
     }
 
-    override suspend fun addControlPoint(subjectName: String, point: Subject.ControlPoint) {
-        // Найдём предмет по имени (можно сделать лучше через id)
-        val groupRef = firestore.collection("groups")
-        val subjectsQuery = groupRef.get().await()
+    override suspend fun addControlPoint(subjectId: String, groupId: String, point: Subject.ControlPoint) {
+        try {
+            val docRef = firestore.collection("groups")
+                .document(groupId)
+                .collection("subjects")
+                .document(subjectId)
 
-        for (group in subjectsQuery) {
-            val subjectRef = group.reference.collection("subjects")
-                .whereEqualTo("name", subjectName)
-                .get()
-                .await()
+            val snapshot = docRef.get().await()
+            val dto = snapshot.toObject(SubjectDto::class.java)
 
-            subjectRef.documents.forEach { doc ->
-                val dto = doc.toObject(SubjectDto::class.java)
-                if (dto != null) {
-                    val updatedPoints = dto.controlPoints + mapOf("name" to point.name, "date" to point.date)
-                    doc.reference.update("controlPoints", updatedPoints).await()
-                }
+            if (dto != null) {
+                val updatedPoints = dto.controlPoints + mapOf("name" to point.name, "date" to point.date)
+                docRef.update("controlPoints", updatedPoints).await()
             }
+
+        } catch (e: Exception) {
+            println(e.localizedMessage)
+            // обработка ошибки
         }
     }
 }
+

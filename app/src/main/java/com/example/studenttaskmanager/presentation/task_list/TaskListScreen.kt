@@ -92,7 +92,6 @@ fun TaskListScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // 🔍 Поиск
             OutlinedTextField(
                 value = state.query,
                 onValueChange = viewModel::onQueryChanged,
@@ -108,7 +107,6 @@ fun TaskListScreen(
                 Text(if (isFiltersVisible) "Скрыть фильтры" else "Показать фильтры")
             }
 
-            // 🎯 Фильтры
             AnimatedVisibility(visible = isFiltersVisible) {
                 FilterSection(
                     state = state,
@@ -134,7 +132,6 @@ fun TaskListScreen(
 
             Spacer(Modifier.height(8.dp))
 
-            // 📋 Список задач
             Box(modifier = Modifier.weight(1f)) {
                 when {
                     state.isLoading -> Box(
@@ -161,14 +158,15 @@ fun TaskListScreen(
                         } else {
                             TaskListContent(
                                 tasks = tasksToShow,
-                                modifier = Modifier
+                                modifier = Modifier,
+                                navController = navController
                             )
                         }
                     }
                 }
             }
 
-            // 👤 Кнопка профиля внизу
+
             Divider()
             Spacer(Modifier.height(8.dp))
             Row(
@@ -189,22 +187,28 @@ fun TaskListScreen(
 
 
 @Composable
-private fun TaskListContent(tasks: List<Task>, modifier: Modifier) {
+private fun TaskListContent(tasks: List<Task>, modifier: Modifier, navController: NavController) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp)
     ) {
         items(items = tasks, key = { it.id }) { task ->
-            TaskItem(task = task)
+            TaskItem(task = task, onClick = {
+                navController.navigate("taskDetails/${task.id}/${task.subject?.name}")
+            })
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-fun TaskItem(task: Task) {
+fun TaskItem(task: Task, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.background
@@ -214,6 +218,8 @@ fun TaskItem(task: Task) {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(task.title, style = MaterialTheme.typography.titleMedium)
+            Text(task.subject.toString())
+            Text(task.priority.name)
             Text("Дедлайн: ${task.deadline.toFormattedDate()}")
         }
     }
