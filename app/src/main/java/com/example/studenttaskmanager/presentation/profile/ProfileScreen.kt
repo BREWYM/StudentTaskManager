@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -25,6 +28,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel
 
@@ -38,6 +42,8 @@ fun ProfileScreen(
         viewModel.loadUser()
     }
 
+    val currentUser = viewModel.currentUser
+    val members = viewModel.members
     val name by remember { derivedStateOf { viewModel.name } }
     val group by remember { derivedStateOf { viewModel.currentGroupName } }
     val message by remember { derivedStateOf { viewModel.message } }
@@ -48,9 +54,19 @@ fun ProfileScreen(
         group?.let {
             Text("Группа: $it")
             Spacer(Modifier.height(8.dp))
+            if (currentUser?.groupId != null) {
+                GroupMembersSection(
+                    members = members,
+                    currentUser = currentUser,
+                    adminId = viewModel.adminId.orEmpty(),
+                ) { viewModel.removeMember(it) }
+            }
             InviteCodeSection(viewModel.inviteCode)
-            Button(onClick = { viewModel.leaveGroup() }) {
-                Text("Выйти из группы")
+            Button( modifier = Modifier
+                .align(Alignment.End),
+                onClick = { viewModel.leaveGroup() }
+            ) {
+                Text("Выйти из группы", fontSize = 12.sp)
             }
         } ?: run {
             OutlinedTextField(
@@ -82,26 +98,42 @@ fun ProfileScreen(
             ) {
                 Text("Присоединиться")
             }
-            Button(
-                onClick = {
-                    viewModel.logout()
-                    navController.navigate("login") {
-                        popUpTo("tasks") { inclusive = true } // очищаем стек до логина
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 32.dp)
-            ) {
-                Text("Выйти", color = Color.White)
-
-            }
 
             message?.let {
                 Spacer(Modifier.height(16.dp))
                 Text(it, color = Color.Green)
             }
+        }
+        Spacer(Modifier.weight(1f))
+        Button(
+            onClick = {
+                navController.navigate("tasks") {
+                    popUpTo("tasks") { inclusive = false } // очищаем стек до задач
+                }
+            },
+//            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 32.dp)
+        ) {
+            Icon(Icons.Default.Settings, contentDescription = "Настройки", modifier = Modifier.padding(end = 8.dp))
+            Text("Настроить напоминания", color = Color.White, fontSize = 16.sp)
+
+        }
+        Button(
+            onClick = {
+                viewModel.logout()
+                navController.navigate("login") {
+                    popUpTo("tasks") { inclusive = true } // очищаем стек до логина
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 32.dp)
+        ) {
+            Text("ВЫЙТИ", color = Color.White, fontSize = 16.sp)
+
         }
     }
 }

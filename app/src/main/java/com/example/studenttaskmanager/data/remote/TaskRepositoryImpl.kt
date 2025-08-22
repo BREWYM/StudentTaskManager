@@ -16,7 +16,7 @@ import java.util.UUID
 class TaskRepositoryImpl(
     private val firestore: FirebaseFirestore,
     private val subjectRepository: SubjectRepository,
-//    private val storage: FirebaseStorage
+//    private val storage: FirebaseStorage,
 ): TaskRepository
 {
     private val tasksCollection = firestore.collection("tasks")
@@ -78,6 +78,7 @@ class TaskRepositoryImpl(
         val taskWithId = task.copy(id = docRef.id)
         val dto = TaskDto.fromTask(taskWithId)
         docRef.set(dto).await()
+//        scheduleDeadlineNotification(context = context, task)
     }
 
     override suspend fun getTaskById(taskId: String): Task {
@@ -114,6 +115,32 @@ class TaskRepositoryImpl(
             .set(comment.copy(id = commentId))
             .await()
     }
+//    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
+//    fun scheduleDeadlineNotification(context: Context, task: Task) {
+//        val intent = Intent(context, DeadlineReceiver::class.java).apply {
+//            putExtra("title", task.title)
+//            putExtra("deadline", SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(task.deadline)))
+//        }
+//
+//        val pendingIntent = PendingIntent.getBroadcast(
+//            context,
+//            task.id.hashCode(),
+//            intent,
+//            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+//        )
+//
+//        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+//
+//        val notifyTime = task.deadline - TimeUnit.HOURS.toMillis(3) // за 3 часа до дедлайна
+//
+//        if (notifyTime > System.currentTimeMillis()) {
+//            alarmManager.setExactAndAllowWhileIdle(
+//                AlarmManager.RTC_WAKEUP,
+//                notifyTime,
+//                pendingIntent
+//            )
+//        }
+//    }
 
 
 //    override suspend fun uploadFile(file: Uri): String {

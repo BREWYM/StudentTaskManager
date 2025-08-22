@@ -12,9 +12,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.studenttaskmanager.presentation.task_list.toFormattedDate
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -60,16 +68,28 @@ fun TaskDetailsScreen(
                 value = it.title,
                 onValueChange = viewModel::updateTitle,
                 label = { Text("Название") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Info,  // замените на нужный
+                        contentDescription = "Заголовок"
+                    )
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = editableSubjectName,
-                onValueChange ={
+                onValueChange = {
                     editableSubjectName = it
                     viewModel.updateSubject(it)
-                               },
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Предмет"
+                    )
+                },
                 label = { Text("Предмет") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -78,15 +98,33 @@ fun TaskDetailsScreen(
                 value = it.professor,
                 onValueChange = viewModel::updateProfessor,
                 label = { Text("Преподаватель") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Предмет"
+                    )
+                },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
+//            OutlinedTextField(
+//                value = it.deadline.toString(),
+//                onValueChange = viewModel::updateDate,
+//                label = { Text("Дедлайн") },
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//            )
             OutlinedTextField(
-                value = it.deadline.toString(),
+                value = it.deadline.toFormattedDate(), // строковое представление даты
                 onValueChange = viewModel::updateDate,
                 label = { Text("Дедлайн") },
-                modifier = Modifier
-                    .fillMaxWidth()
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Дедлайн"
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(Modifier.height(8.dp))
@@ -135,6 +173,7 @@ fun TaskDetailsScreen(
                 Button(onClick = {
                     viewModel.save()
                     Toast.makeText(context, "Сохранено", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack()
                 }) {
                     Text("Сохранить")
                 }

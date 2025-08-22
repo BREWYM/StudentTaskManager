@@ -1,13 +1,20 @@
 package com.example.studenttaskmanager.presentation.add_task
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,17 +58,26 @@ fun AddTaskScreen(
             )
         }
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
+            ,
+
         ) {
             // Поля ввода
             OutlinedTextField(
                 value = state.title,
                 onValueChange = viewModel::updateTitle,
-                label = { Text("Название*") },
+                label = { Text("Название") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = ""
+                    )
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -69,6 +85,12 @@ fun AddTaskScreen(
                 value = state.subject ?: "",
                 onValueChange = viewModel::updateSubject,
                 label = { Text("Предмет") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = ""
+                    )
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -77,8 +99,15 @@ fun AddTaskScreen(
                 value = state.professor,
                 onValueChange = viewModel::updateProfessor,
                 label = { Text("Преподаватель") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = ""
+                    )
+                },
                 modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.padding(padding))
 
             // Выбор даты
             val showDatePicker = remember { mutableStateOf(false) }
@@ -86,13 +115,26 @@ fun AddTaskScreen(
                 onClick = { showDatePicker.value = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = ""
+                )
+
                 Text("Дедлайн: ${state.deadline.toFormattedDate()}")
             }
             if (showDatePicker.value) {
-                DatePickerDialog(
-                    onDismissRequest = { showDatePicker.value = false },
-                    onDateSelected = { timestamp ->
-                        viewModel.updateDeadline(timestamp)
+//                DatePickerDialog(
+//                    onDismissRequest = { showDatePicker.value = false },
+//                    onDateSelected = { timestamp ->
+//                        viewModel.updateDeadline(timestamp)
+//                    }
+//                )
+                SystemDatePickerDialog(
+                    onDateSelected = {
+                        viewModel.updateDeadline(it)
+                    },
+                    onDismissRequest = {
+                        showDatePicker.value = false
                     }
                 )
             }
@@ -121,7 +163,9 @@ fun AddTaskScreen(
             // Кнопка сохранения
             Button(
                 onClick = viewModel::addTask,
-                enabled = !state.isLoading && state.title.isNotBlank() && state.subject.toString().isNotBlank(),
+                enabled = !state.isLoading
+                        && state.title.isNotBlank()
+                        && state.subject.toString().isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp)

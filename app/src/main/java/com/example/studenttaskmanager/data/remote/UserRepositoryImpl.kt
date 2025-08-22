@@ -91,4 +91,18 @@ class UserRepositoryImpl(
         val currentUser = getCurrentUser() ?: return
         usersCollection.document(currentUser.id).update("groupId", null).await()
     }
+
+    override suspend fun getGroupMembers(groupId: String): List<User> {
+        val snapshot = usersCollection
+            .whereEqualTo("groupId", groupId)
+            .get().await()
+        return snapshot.toObjects(User::class.java)
+    }
+
+    override suspend fun removeUserFromGroup(userId: String, groupId: String) {
+        usersCollection
+            .document(userId)
+            .update("groupId", null)
+            .await()
+    }
 }

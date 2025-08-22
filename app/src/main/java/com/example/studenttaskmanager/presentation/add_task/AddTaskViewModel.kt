@@ -64,6 +64,7 @@ class AddTaskViewModel(
                 )
                 addTaskUseCase(task)
                 _state.value = _state.value.copy(isSuccess = true)
+
             } catch (e: Exception) {
                 _state.value = _state.value.copy(error = e.message)
             } finally {

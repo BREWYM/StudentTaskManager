@@ -33,13 +33,15 @@ val firebaseModule = module {
 
 val repositoryModule = module {
     single<SubjectRepository> { SubjectRepositoryImpl(get()) }
-    single<TaskRepository> { TaskRepositoryImpl(get(), get()) }
+//    single<Context> {androidContext()  }
+    single<TaskRepository> { TaskRepositoryImpl(get(), get(),) }
     single<AuthRepository> { AuthRepositoryImpl(
         get<FirebaseAuth>(),
         firestore = get(),
     ) }
     single<UserRepository> { UserRepositoryImpl(get(), get()) }
     //single<GroupRepository> { GroupRepositoryImpl(get()) }
+
 }
 val useCaseModule = module {
     single { GetTasksUseCase(get()) }

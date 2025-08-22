@@ -1,11 +1,13 @@
 package com.example.studenttaskmanager.presentation.profile
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studenttaskmanager.domain.models.Group
+import com.example.studenttaskmanager.domain.models.User
 import com.example.studenttaskmanager.domain.repositories.UserRepository
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -21,6 +23,8 @@ class ProfileViewModel(
 
     var name by mutableStateOf("")
         private set
+    var adminId by mutableStateOf<String?>(null)
+        private set
 
     var groupName by mutableStateOf("")
     var inviteCode by mutableStateOf("")
@@ -30,6 +34,8 @@ class ProfileViewModel(
 
     var message by mutableStateOf<String?>(null)
         private set
+    var members by mutableStateOf<List<User>>(emptyList()); private set
+    var currentUser by mutableStateOf<User?>(null); private set
 
     fun onGroupNameChange(newName: String) {
         groupName = newName
@@ -41,6 +47,7 @@ class ProfileViewModel(
 
     fun loadUser() = viewModelScope.launch {
         val user = userRepository.getCurrentUser()
+        currentUser = user
         name = user?.name ?: ""
         user?.groupId?.let { gid ->
             try {
@@ -51,9 +58,13 @@ class ProfileViewModel(
                     .await()
                 val group = snapshot.toObject(Group::class.java)
                 currentGroupName = group?.name
+                adminId = group?.adminId
+                inviteCode = group?.inviteCode.orEmpty()
+                loadMembers(gid)
             } catch (e: Exception) {
                 println(e.localizedMessage)
                 // обработать ошибку чтения
+                message = "Не удалось загрузить данные"
             }
         }
     }
@@ -84,10 +95,29 @@ class ProfileViewModel(
     fun leaveGroup() = viewModelScope.launch {
         userRepository.leaveGroup()
         currentGroupName = null
+        members = emptyList()
         message = "Вы вышли из группы"
         inviteCode = ""
     }
     fun logout() {
         Firebase.auth.signOut() // или через AuthRepository, если он внедрён
+    }
+
+
+    fun removeMember(user: User) = viewModelScope.launch {
+        currentUser?.groupId?.let { gid ->
+            userRepository.removeUserFromGroup(user.id, gid)
+            loadMembers(gid)  // обновляем участников
+        }
+    }
+
+    private fun loadMembers(groupId: String) = viewModelScope.launch {
+        try {
+            members = userRepository.getGroupMembers(groupId)
+            Log.d("DEBUG", "Loading members for $groupId")
+        } catch (e: Exception) {
+            message = "Не удалось получить участников: ${e.message}"
+            Log.d("DEBUG", "АНЛАК")
+        }
     }
 }

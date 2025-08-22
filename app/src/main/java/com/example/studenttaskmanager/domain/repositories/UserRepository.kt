@@ -8,4 +8,6 @@ interface UserRepository {
     suspend fun createGroup(name: String): String // Возвращает ID группы
     suspend fun joinGroup(inviteCode: String): Boolean
     suspend fun leaveGroup()
+    suspend fun getGroupMembers(groupId: String): List<User>
+    suspend fun removeUserFromGroup(userId: String, groupId: String)
 }

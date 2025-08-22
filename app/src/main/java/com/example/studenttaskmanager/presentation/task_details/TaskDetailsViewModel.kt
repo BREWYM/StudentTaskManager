@@ -68,7 +68,8 @@ class TaskDetailsViewModel(
     fun save() {
         viewModelScope.launch {
             _task.value?.let { task ->
-                Log.d("SAVE", "Saving task: $task")
+                Log.d("SAVE", "Full task before save: $task")
+                Log.d("SAVE", "Subject before save: ${task.subject?.toString()}")
                 repository.updateTask(task)
             }
         }
